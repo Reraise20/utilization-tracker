@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Utilization Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0F172A;color:#E2E8F0;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:#334155;border-radius:2px;}
+input,select,textarea,button{font-family:inherit;outline:none;}
+#config-screen{display:flex;align-items:center;justify-content:center;height:100vh;}
+.cfg-box{background:#1E293B;border:1px solid #334155;border-radius:16px;padding:32px;width:100%;max-width:460px;}
+.cfg-title{font-size:20px;font-weight:800;color:#F8FAFC;margin-bottom:6px;}
+.cfg-sub{font-size:12px;color:#64748B;margin-bottom:22px;line-height:1.6;}
+.cfg-lbl{display:block;font-size:10px;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;margin-top:14px;}
+.cfg-inp{width:100%;background:#0F172A;border:1px solid #334155;border-radius:8px;padding:10px 12px;color:#E2E8F0;font-size:13px;}
+.cfg-inp:focus{border-color:#3B82F6;}
+.cfg-btn{width:100%;background:#3B82F6;border:none;border-radius:9px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:20px;}
+#loading-screen{display:none;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:14px;color:#64748B;font-size:13px;}
+.spinner{width:30px;height:30px;border:3px solid #334155;border-top-color:#3B82F6;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#app-screen{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.layout{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:232px;background:#1E293B;border-right:1px solid #334155;display:flex;flex-direction:column;flex-shrink:0;}
+.sb-head{padding:16px;border-bottom:1px solid #334155;}
+.sb-brand{font-size:9px;letter-spacing:2px;color:#475569;text-transform:uppercase;}
+.sb-title{font-size:15px;font-weight:800;color:#F8FAFC;margin-top:2px;}
+.sb-meta{font-size:9px;color:#475569;margin-top:3px;display:flex;align-items:center;gap:4px;}
+.live-dot{width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.sb-list{flex:1;overflow-y:auto;padding:10px 8px;}
+.sec-lbl{font-size:9px;letter-spacing:2px;color:#475569;text-transform:uppercase;margin-bottom:7px;padding-left:4px;}
+.emp-item{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer;margin-bottom:3px;border:1px solid transparent;transition:all 0.15s;}
+.emp-item.active{background:#0F172A;border-color:#334155;}
+.emp-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.emp-nm{font-size:12px;font-weight:600;color:#F1F5F9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.emp-st{font-size:9px;margin-top:1px;}
+.xbtn{background:none;border:none;color:#475569;cursor:pointer;font-size:16px;margin-left:auto;flex-shrink:0;line-height:1;}
+.add-box{margin-top:8px;padding-top:8px;border-top:1px solid #334155;}
+.sinp{width:100%;background:#0F172A;border:1px solid #334155;border-radius:7px;padding:7px 10px;color:#E2E8F0;font-size:12px;}
+.btn-add{width:100%;background:#3B82F6;border:none;border-radius:7px;padding:7px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-top:4px;}
+.sb-nav{border-top:1px solid #334155;padding:8px;}
+.nav-btn{width:100%;text-align:left;border:none;border-radius:6px;padding:8px 10px;font-size:12px;cursor:pointer;margin-bottom:2px;transition:all 0.15s;}
+.exp-btn{width:100%;text-align:left;background:#064E3B;border:1px solid #065F46;border-radius:6px;padding:8px 10px;color:#6EE7B7;font-size:12px;font-weight:700;cursor:pointer;margin-top:4px;}
+.cfg-link{width:100%;text-align:left;background:transparent;border:1px solid #334155;border-radius:6px;padding:7px 10px;color:#475569;font-size:11px;cursor:pointer;margin-top:4px;}
+.main{flex:1;overflow-y:auto;padding:22px 28px;}
+.page-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
+.page-name{font-size:20px;font-weight:800;color:#F8FAFC;}
+.page-date{font-size:11px;color:#64748B;margin-top:2px;}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.scard{background:#1E293B;border:1px solid #334155;border-radius:10px;padding:11px 13px;}
+.sl{font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:1px;}
+.sv{font-size:19px;font-weight:800;margin-top:2px;}
+.ss{font-size:9px;color:#475569;margin-top:1px;}
+.card{background:#1E293B;border:1px solid #334155;border-radius:12px;padding:16px 18px;margin-bottom:12px;}
+.ctitle{font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:13px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.flbl{display:block;font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;margin-top:10px;}
+.finp{width:100%;background:#0F172A;border:1px solid #334155;border-radius:7px;padding:8px 11px;color:#E2E8F0;font-size:13px;}
+.fsel{width:100%;background:#0F172A;border:1px solid #334155;border-radius:7px;padding:8px 11px;color:#E2E8F0;font-size:13px;cursor:pointer;}
+.task-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0 12px;}
+.tbtn{padding:8px;border-radius:7px;border:1px solid #334155;background:#0F172A;color:#94A3B8;font-size:11px;cursor:pointer;text-align:left;transition:all 0.12s;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sub-btn{width:100%;background:#3B82F6;border:none;border-radius:8px;padding:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
+.bar-bg{height:7px;background:#0F172A;border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.4s;}
+.entry{background:#0F172A;border-left:3px solid #334155;border-radius:8px;padding:9px 11px;display:flex;align-items:flex-start;margin-bottom:6px;}
+.jbadge{font-size:9px;background:rgba(245,158,11,0.15);color:#F59E0B;border-radius:3px;padding:1px 6px;font-weight:700;margin-left:4px;}
+.cbadge{font-size:9px;border-radius:3px;padding:1px 6px;font-weight:700;}
+.toast{position:fixed;bottom:18px;right:18px;border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;color:#fff;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);display:none;}
+.empty{text-align:center;color:#475569;font-size:12px;padding:24px 0;}
+.note{font-size:10px;color:#64748B;background:#0F172A;border:1px solid #334155;border-radius:6px;padding:7px 11px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<div id="config-screen">
+  <div class="cfg-box">
+    <div class="cfg-title">🔧 Connect Your Database</div>
+    <div class="cfg-sub">One-time setup. Credentials saved in browser.</div>
+    <label class="cfg-lbl">Supabase Project URL</label>
+    <input class="cfg-inp" id="sb-url" placeholder="https://xxxx.supabase.co"/>
+    <label class="cfg-lbl">Supabase Anon Key</label>
+    <input class="cfg-inp" id="sb-key" placeholder="eyJhbGciOi..."/>
+    <button class="cfg-btn" onclick="connectDB()">Connect & Launch →</button>
+  </div>
+</div>
+
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div>Connecting…</div>
+</div>
+
+<div id="app-screen">
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-head">
+        <div class="sb-brand">Team EGO</div>
+        <div class="sb-title">Utilization Tracker</div>
+        <div class="sb-meta"><span class="live-dot"></span> Live · Real-time sync</div>
+      </div>
+      <div class="sb-list">
+        <div class="sec-lbl">EMPLOYEES</div>
+        <div id="emp-list"></div>
+        <div class="add-box">
+          <input class="sinp" id="new-emp" placeholder="Add employee name…" onkeydown="if(event.key==='Enter')addEmp()"/>
+          <button class="btn-add" onclick="addEmp()">+ Add Employee</button>
+        </div>
+      </div>
+      <div class="sb-nav">
+        <button class="nav-btn" id="nav-log"       onclick="switchView('log')">📝 Log Time</button>
+        <button class="nav-btn" id="nav-dashboard" onclick="switchView('dashboard')">📊 Dashboard</button>
+        <button class="nav-btn" id="nav-history"   onclick="switchView('history')">📅 History</button>
+        <button class="exp-btn"                    onclick="downloadCSV()">⬇ Download CSV</button>
+        <button class="cfg-link"                   onclick="resetConfig()">⚙ Change Database</button>
+      </div>
+    </div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TASKS=[
+  {id:"mcs",      label:"MCS Bucket Review",        color:"#3B82F6",icon:"📋",mode:"count",target:30},
+  {id:"audit",    label:"Audit",                    color:"#8B5CF6",icon:"🔍",mode:"count",target:30},
+  {id:"payer",    label:"Payer Based Analysis",     color:"#10B981",icon:"📊",mode:"hours",target:8},
+  {id:"jira",     label:"Jira Request",             color:"#F59E0B",icon:"🎫",mode:"hours",target:8},
+  {id:"research", label:"Research",                 color:"#06B6D4",icon:"🔬",mode:"hours",target:8},
+  {id:"others",   label:"Others",                   color:"#EC4899",icon:"📌",mode:"hours",target:8},
+  {id:"downtime", label:"Downtime / Team Activity", color:"#6B7280",icon:"☕",mode:"hours",target:8},
+];
+let SB_URL="", SB_KEY="";
+let employees=[], entries=[], currentEmp="", currentView="log", histDate=todayStr();
+let appState={type:"mcs",count:"",hours:"0",minutes:"30",jira:"",desc:""};
+let selectedDate=todayStr();
+
+// ── MOTIVATIONAL QUOTES ────────────────────────────
+const QUOTES = {
+  excellent: [
+    "🔥 Absolute beast mode! You're carrying the team today!",
+    "⚡ Unstoppable! This is what elite performance looks like!",
+    "🏆 You're not just hitting targets — you're destroying them!",
+    "🚀 100%+ and still going? You're in a league of your own!",
+    "💪 This is the energy that wins. Keep dominating!",
+    "🌟 Outstanding work! The team is lucky to have you!",
+    "🎯 Precision. Speed. Excellence. That's you today!",
+  ],
+  good: [
+    "💚 Solid work! You're right on track — keep pushing!",
+    "👏 Good progress! A little more and you'll be unstoppable!",
+    "📈 You're building momentum — don't stop now!",
+    "✅ Consistent and reliable. That's a winner's mindset!",
+    "🎯 Almost there! One final push to hit your target!",
+  ],
+  low: [
+    "💙 Every expert was once a beginner. Today is your comeback!",
+    "⏰ The day isn't over yet — your best work could be next!",
+    "🌱 Small steps still move forward. Keep going!",
+    "💡 Slow start? No problem. Finish strong and own the day!",
+    "🤝 The team believes in you — now believe in yourself!",
+    "🔄 Reset. Refocus. You've got what it takes!",
+  ],
+  zero: [
+    "👋 Hey! Ready to make today count? Log your first entry!",
+    "🌅 A fresh day, a fresh start — let's get to work!",
+    "💫 Your utilization story starts with the first entry!",
+  ]
+};
+
+function getQuote(util, hasEntries) {
+  if (!hasEntries) return QUOTES.zero[Math.floor(Math.random() * QUOTES.zero.length)];
+  if (util >= 100) return QUOTES.excellent[Math.floor(Math.random() * QUOTES.excellent.length)];
+  if (util >= 60)  return QUOTES.good[Math.floor(Math.random() * QUOTES.good.length)];
+  return QUOTES.low[Math.floor(Math.random() * QUOTES.low.length)];
+}
+
+
+function todayStr(){return new Date().toISOString().split("T")[0];}
+function uCol(u){return u>=100?"#10B981":u>=60?"#F59E0B":"#EF4444";}
+function fmtH(h){const hr=Math.floor(h),mn=Math.round((h-hr)*60);if(!hr&&!mn)return"0m";if(!hr)return mn+"m";if(!mn)return hr+"h";return hr+"h "+mn+"m";}
+function esc(s){return s.replace(/'/g,"\\'");}
+
+// ── REST API CALLS (no SDK needed) ─────────────────
+async function sbGet(table, params=""){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${params}`,{
+    headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"}
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.message||r.statusText);}
+  return r.json();
+}
+async function sbPost(table, body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{
+    method:"POST",
+    headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"return=representation"},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.message||r.statusText);}
+  return r.json();
+}
+async function sbDelete(table, filter){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{
+    method:"DELETE",
+    headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"}
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.message||r.statusText);}
+}
+
+// ── CONNECT ────────────────────────────────────────
+async function connectDB(){
+  SB_URL=document.getElementById("sb-url").value.trim().replace(/\/$/,"");
+  SB_KEY=document.getElementById("sb-key").value.trim();
+  if(!SB_URL||!SB_KEY)return notify("Enter both URL and key","err");
+  show("loading");
+  try{
+    await loadEmployees();
+    await loadEntries();
+    localStorage.setItem("sb_url",SB_URL);
+    localStorage.setItem("sb_key",SB_KEY);
+    show("app");
+    switchView("log");
+    renderAll();
+    notify("Connected ✓");
+    // poll every 10s for real-time feel
+    setInterval(async()=>{await loadEmployees();await loadEntries();renderAll();},10000);
+  }catch(e){
+    show("config");
+    notify("Error: "+e.message,"err");
+  }
+}
+function resetConfig(){
+  localStorage.removeItem("sb_url");localStorage.removeItem("sb_key");
+  show("config");
+}
+function show(s){
+  document.getElementById("config-screen").style.display=s==="config"?"flex":"none";
+  document.getElementById("loading-screen").style.display=s==="loading"?"flex":"none";
+  document.getElementById("app-screen").style.display=s==="app"?"flex":"none";
+}
+
+// ── DATA ───────────────────────────────────────────
+async function loadEmployees(){
+  const data=await sbGet("employees","order=name");
+  employees=data.map(r=>r.name);
+  if(!currentEmp&&employees.length)currentEmp=employees[0];
+}
+async function loadEntries(){
+  const data=await sbGet("entries","order=logged_at.desc");
+  entries=data;
+}
+
+async function addEmp(){
+  const n=document.getElementById("new-emp").value.trim();
+  if(!n)return notify("Enter a name","err");
+  if(employees.includes(n))return notify("Already exists","err");
+  try{
+    await sbPost("employees",{name:n});
+    await loadEmployees();
+    currentEmp=n;
+    document.getElementById("new-emp").value="";
+    renderAll();notify(n+" added ✓");
+  }catch(e){notify("Error: "+e.message,"err");}
+}
+async function removeEmp(name){
+  if(!confirm("Remove "+name+" and all their entries?"))return;
+  try{
+    await sbDelete("entries","employee=eq."+encodeURIComponent(name));
+    await sbDelete("employees","name=eq."+encodeURIComponent(name));
+    if(currentEmp===name)currentEmp=employees.filter(e=>e!==name)[0]||"";
+    await loadEmployees();await loadEntries();
+    renderAll();notify(name+" removed","info");
+  }catch(e){notify("Error: "+e.message,"err");}
+}
+
+function setType(id){
+  appState={type:id,count:"",hours:"0",minutes:"30",jira:"",desc:""};
+  renderMain();
+}
+async function logEntry(){
+  if(!currentEmp)return notify("Select an employee","err");
+  const task=TASKS.find(t=>t.id===appState.type);
+  let row={employee:currentEmp,date:selectedDate,task_type:appState.type,description:appState.desc.trim(),logged_at:new Date().toISOString()};
+  if(task.mode==="count"){
+    const c=parseInt(appState.count||0);
+    if(!c||c<=0)return notify("Enter a valid count","err");
+    row.count=c;
+  }else{
+    const h=parseFloat(appState.hours||0)+parseFloat(appState.minutes||0)/60;
+    if(h<=0)return notify("Enter a valid duration","err");
+    if(appState.type==="jira"&&!appState.jira.trim())return notify("Jira number required","err");
+    row.hours=h;row.jira_number=appState.jira.trim();
+  }
+  try{
+    await sbPost("entries",row);
+    await loadEntries();
+    appState={type:appState.type,count:"",hours:"0",minutes:"30",jira:"",desc:""};
+    renderAll();notify("Entry logged ✓");
+  }catch(e){notify("Error: "+e.message,"err");}
+}
+async function delEntry(id){
+  try{
+    await sbDelete("entries","id=eq."+id);
+    await loadEntries();
+    renderAll();notify("Removed","info");
+  }catch(e){notify("Error: "+e.message,"err");}
+}
+
+// ── STATS ──────────────────────────────────────────
+function calcUtil(emp,date){
+  const de=entries.filter(e=>e.employee===emp&&e.date===date);
+  let u=0;
+  TASKS.forEach(t=>{
+    if(t.mode==="count") u+=(de.filter(e=>e.task_type===t.id).reduce((s,e)=>s+(e.count||0),0)/t.target)*100;
+    else if(t.mode==="hours") u+=(de.filter(e=>e.task_type===t.id).reduce((s,e)=>s+(e.hours||0),0)/t.target)*100;
+  });
+  return u;
+}
+function getStats(emp,date){
+  const de=entries.filter(e=>e.employee===emp&&e.date===date);
+  const util=calcUtil(emp,date);
+  const downtime=de.filter(e=>e.task_type==="downtime").reduce((s,e)=>s+(e.hours||0),0);
+  const byType={};
+  TASKS.forEach(t=>{byType[t.id]=t.mode==="count"
+    ?de.filter(e=>e.task_type===t.id).reduce((s,e)=>s+(e.count||0),0)
+    :de.filter(e=>e.task_type===t.id).reduce((s,e)=>s+(e.hours||0),0);});
+  return{de,util,downtime,byType};
+}
+
+// ── TOAST ──────────────────────────────────────────
+let tt;
+function notify(msg,type="ok"){
+  clearTimeout(tt);
+  const el=document.getElementById("toast");
+  el.textContent=msg;el.style.display="block";
+  el.style.background=type==="err"?"#EF4444":type==="info"?"#334155":"#10B981";
+  tt=setTimeout(()=>el.style.display="none",2800);
+}
+
+// ── NAVIGATION ─────────────────────────────────────
+function switchView(v){
+  currentView=v;
+  ["log","dashboard","history"].forEach(x=>{
+    const b=document.getElementById("nav-"+x);if(!b)return;
+    b.style.background=x===v?"#3B82F6":"transparent";
+    b.style.color=x===v?"#fff":"#94A3B8";
+    b.style.fontWeight=x===v?"700":"400";
+  });
+  renderMain();
+}
+
+// ── RENDER ─────────────────────────────────────────
+function renderSidebar(){
+  const el=document.getElementById("emp-list");if(!el)return;
+  if(!employees.length){el.innerHTML='<div class="empty">No employees yet</div>';return;}
+  el.innerHTML=employees.map(e=>{
+    const u=calcUtil(e,todayStr());const uc=uCol(u);const ac=e===currentEmp;
+    return`<div class="emp-item${ac?" active":""}" onclick="selectEmp('${esc(e)}')">
+      <div class="emp-av" style="background:${uc}22;border:1px solid ${uc};color:${uc}">${e[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div class="emp-nm">${e}</div>
+        <div class="emp-st" style="color:${u>0?uc:"#475569"}">${u>0?u.toFixed(0)+"% today":"No entries"}</div>
+      </div>
+      <button class="xbtn" onclick="event.stopPropagation();removeEmp('${esc(e)}')">×</button>
+    </div>`;
+  }).join("");
+}
+function selectEmp(name){currentEmp=name;renderAll();}
+
+function renderMain(){
+  const el=document.getElementById("main");if(!el)return;
+  if(!currentEmp){
+    el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:60%;flex-direction:column;gap:12px;color:#475569"><div style="font-size:44px">👥</div><div>Add an employee to get started</div></div>';
+    return;
+  }
+  const s=getStats(currentEmp,selectedDate);
+  const uc=uCol(s.util);
+  const isToday=selectedDate===todayStr();
+  const dateStr=isToday?"Today — "+new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):new Date(selectedDate+"T00:00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  let html=`<div class="page-hdr">
+    <div><div class="page-name">${currentEmp}</div><div class="page-date">${dateStr}</div></div>
+    ${s.de.length?`<div><div style="font-size:36px;font-weight:800;color:${uc};line-height:1;text-align:right">${s.util.toFixed(0)}%</div><div style="font-size:10px;color:#64748B;text-align:right;margin-top:2px">${isToday?"Today's":"Selected day"} utilization</div></div>`:""}
+  </div>`;
+  if(s.de.length){
+    const mcs=s.byType.mcs||0,aud=s.byType.audit||0;
+    const oth=(s.byType.payer||0)+(s.byType.jira||0)+(s.byType.research||0)+(s.byType.others||0);
+    const dwn=s.byType.downtime||0;
+    html+=`<div class="stat-row">
+      <div class="scard"><div class="sl">MCS Done</div><div class="sv" style="color:#3B82F6">${mcs}<span style="font-size:11px;color:#475569"> /30</span></div><div class="ss">${((mcs/30)*100).toFixed(0)}% of target</div></div>
+      <div class="scard"><div class="sl">Audits Done</div><div class="sv" style="color:#8B5CF6">${aud}<span style="font-size:11px;color:#475569"> /30</span></div><div class="ss">${((aud/30)*100).toFixed(0)}% of target</div></div>
+      <div class="scard"><div class="sl">Other Work</div><div class="sv" style="color:#10B981">${fmtH(oth)}</div><div class="ss">${((oth/8)*100).toFixed(0)}% of 8h</div></div>
+      <div class="scard"><div class="sl">Downtime</div><div class="sv" style="color:#6B7280">${fmtH(dwn)}</div><div class="ss">${((dwn/8)*100).toFixed(0)}% counted</div></div>
+    </div>`;
+  }
+
+  // quote
+  const quote = getQuote(s.util, s.de.length > 0);
+  const quoteColor = s.de.length === 0 ? "#64748B" : s.util >= 100 ? "#F59E0B" : s.util >= 60 ? "#10B981" : "#3B82F6";
+  html += `<div style="background:#1E293B;border:1px solid ${quoteColor}33;border-left:3px solid ${quoteColor};border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:${quoteColor};font-weight:500;font-style:italic">${quote}</div>`;
+
+  if(currentView==="log")html+=buildLog(s);
+  if(currentView==="dashboard")html+=buildDash(s);
+  if(currentView==="history")html+=buildHistory();
+  el.innerHTML=html;
+}
+
+function bar(pct,color){return`<div class="bar-bg"><div class="bar-fill" style="width:${Math.min(pct,200)}%;background:${color}"></div></div>`;}
+
+function buildLog(s){
+  const task=TASKS.find(t=>t.id===appState.type);
+  const dateSelectorHTML=`<div class="card" style="margin-bottom:12px;padding:12px 16px">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="flex:1">
+        <label class="flbl" style="margin-top:0">Logging Date</label>
+        <input type="date" class="finp" value="${selectedDate}" max="${todayStr()}" onchange="selectedDate=this.value;renderMain()" style="font-size:13px"/>
+      </div>
+      <div style="text-align:right;padding-top:14px">
+        ${selectedDate!==todayStr()?`<span style="font-size:10px;background:#F59E0B22;color:#F59E0B;border-radius:4px;padding:3px 8px;font-weight:600">📅 Logging past date</span>`:`<span style="font-size:10px;background:#10B98122;color:#10B981;border-radius:4px;padding:3px 8px;font-weight:600">✅ Today</span>`}
+      </div>
+    </div>
+  </div>`;
+  const taskBtns=TASKS.map(t=>`<button class="tbtn" onclick="setType('${t.id}')" style="${appState.type===t.id?`background:${t.color};border-color:${t.color};color:#fff;font-weight:700`:""}">${t.icon} ${t.label}</button>`).join("");
+  let fields="";
+  if(task.mode==="count"){
+    fields=`<label class="flbl">Number Completed <span style="color:#475569">(target: ${task.target}/day)</span></label>
+    <input class="finp" type="number" min="1" placeholder="e.g. 15" value="${appState.count}" oninput="appState.count=this.value"/>`;
+  }else{
+    fields=`<div class="g2">
+      <div><label class="flbl">Hours</label><select class="fsel" onchange="appState.hours=this.value">${[0,1,2,3,4,5,6,7,8,9].map(h=>`<option value="${h}"${appState.hours==h?" selected":""}>${h}h</option>`).join("")}</select></div>
+      <div><label class="flbl">Minutes</label><select class="fsel" onchange="appState.minutes=this.value">${[0,15,30,45].map(m=>`<option value="${m}"${appState.minutes==m?" selected":""}>${m}m</option>`).join("")}</select></div>
+    </div>`;
+    if(appState.type==="jira")fields+=`<label class="flbl">Jira Number <span style="color:#EF4444">*</span></label><input class="finp" placeholder="e.g. PROJ-1234" value="${appState.jira}" style="border-color:#F59E0B" oninput="appState.jira=this.value"/>`;
+  }
+  const ph=task.mode==="count"?"Notes about this batch…":appState.type==="research"?"What did you research?…":appState.type==="jira"?"Describe the Jira request…":appState.type==="downtime"?"Team activity, meeting…":"Brief description…";
+  const todayEnts=entries.filter(e=>e.employee===currentEmp&&e.date===selectedDate).sort((a,b)=>b.logged_at.localeCompare(a.logged_at));
+  const uc=uCol(s.util);
+  const entHTML=todayEnts.length?todayEnts.map(e=>{
+    const t=TASKS.find(x=>x.id===e.task_type)||{color:"#334155",icon:"?",label:e.task_type,mode:""};
+    return`<div class="entry" style="border-left-color:${t.color}">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+          <span style="font-size:11px;font-weight:700;color:${t.color}">${t.icon} ${t.label}</span>
+          ${e.jira_number?`<span class="jbadge">${e.jira_number}</span>`:""}
+          ${t.mode==="count"?`<span class="cbadge" style="background:${t.color}22;color:${t.color};margin-left:auto">${e.count} items</span>`:
+            `<span style="font-size:12px;font-weight:700;color:#E2E8F0;margin-left:auto">${fmtH(e.hours||0)}</span>`}
+        </div>
+        ${e.description?`<div style="font-size:10px;color:#64748B;margin-top:3px">${e.description}</div>`:""}
+        <div style="font-size:9px;color:#475569;margin-top:2px">${new Date(e.logged_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+      </div>
+      <button class="xbtn" onclick="delEntry(${e.id})">×</button>
+    </div>`;
+  }).join(""):`<div class="empty">No entries yet today</div>`;
+  return dateSelectorHTML+`<div class="two-col">
+    <div class="card">
+      <div class="ctitle">Log Entry</div>
+      <label class="flbl" style="margin-top:0">Task Type</label>
+      <div class="task-grid">${taskBtns}</div>
+      ${fields}
+      <label class="flbl">Description / Notes</label>
+      <textarea class="finp" rows="3" style="resize:vertical;min-height:58px" placeholder="${ph}" oninput="appState.desc=this.value">${appState.desc}</textarea>
+      <button class="sub-btn" onclick="logEntry()">Log Entry</button>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="ctitle" style="margin-bottom:0">${selectedDate===todayStr()?"Today's Log":"Log for "+selectedDate}</div>
+        ${s.de.length?`<span style="font-size:11px;font-weight:700;color:${uc}">${s.util.toFixed(0)}%</span>`:""}
+      </div>
+      ${s.de.length?`<div style="margin-bottom:10px">${bar(s.util,uc)}</div>`:""}
+      <div style="max-height:380px;overflow-y:auto">${entHTML}</div>
+    </div>
+  </div>`;
+}
+
+function buildDash(s){
+  const breakdown=TASKS.map(t=>{
+    const val=s.byType[t.id]||0;
+    const pct=t.mode==="count"?(val/t.target)*100:t.mode==="hours"?(val/t.target)*100:0;
+    const display=t.mode==="count"?`${val} items`:fmtH(val);
+    const sub=t.mode==="count"?`${pct.toFixed(0)}% of ${t.target} target`:t.mode==="hours"?`${pct.toFixed(0)}% of ${t.target}h`:"tracked only";
+    return`<div style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;color:#94A3B8">${t.icon} ${t.label}</span>
+        <span style="font-size:12px;color:${t.color};font-weight:700">${display} <span style="font-size:9px;color:#475569;font-weight:400">${sub}</span></span>
+      </div>
+      ${t.mode!=="tracked"?bar(pct,t.color):""}
+    </div>`;
+  }).join("");
+  const team=employees.map(e=>{
+    const u=calcUtil(e,selectedDate);const uc=uCol(u);const es=getStats(e,selectedDate);
+    return`<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:13px;font-weight:600;color:#E2E8F0">${e}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:10px;color:#64748B">MCS: ${es.byType.mcs||0} · Audit: ${es.byType.audit||0} · Down: ${fmtH(es.downtime)}</span>
+          <span style="font-size:14px;font-weight:800;color:${es.de.length?uc:"#475569"}">${es.de.length?u.toFixed(0)+"%":"—"}</span>
+        </div>
+      </div>
+      ${es.de.length?bar(u,uc):""}
+    </div>`;
+  }).join("");
+  return`<div class="note">💡 MCS (÷30×100) + Audit (÷30×100) + All hour-based tasks incl. Downtime (÷8×100). Everything stacks — can exceed 100%.</div>
+  <div class="card"><div class="ctitle">Today's Breakdown — ${currentEmp}</div>${breakdown}</div>
+  <div class="card"><div class="ctitle">Full Team — Today</div>${team}</div>`;
+}
+
+function buildHistory(){
+  const he=entries.filter(e=>e.employee===currentEmp&&e.date===histDate).sort((a,b)=>b.logged_at.localeCompare(a.logged_at));
+  const cards=he.length?he.map(e=>{
+    const t=TASKS.find(x=>x.id===e.task_type)||{color:"#334155",icon:"?",label:e.task_type,mode:""};
+    return`<div class="card" style="border-left:3px solid ${t.color}">
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:${t.color}">${t.icon} ${t.label}</span>
+        ${e.jira_number?`<span class="jbadge">${e.jira_number}</span>`:""}
+        ${t.mode==="count"?`<span class="cbadge" style="background:${t.color}22;color:${t.color};margin-left:auto">${e.count} items</span>`:
+          `<span style="font-size:13px;font-weight:700;color:#E2E8F0;margin-left:auto">${fmtH(e.hours||0)}</span>`}
+      </div>
+      ${e.description?`<div style="font-size:11px;color:#64748B;margin-top:6px;line-height:1.5">${e.description}</div>`:""}
+      <div style="font-size:9px;color:#475569;margin-top:4px">${new Date(e.logged_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+    </div>`;
+  }).join(""):`<div class="card"><div class="empty">No entries for this date</div></div>`;
+  return`<div class="card" style="margin-bottom:12px">
+    <label class="flbl" style="margin-top:0">Select Date</label>
+    <input type="date" class="finp" value="${histDate}" max="${todayStr()}" onchange="histDate=this.value;renderMain()"/>
+    <div style="font-size:10px;color:#64748B;margin-top:5px">${he.length} entries for ${currentEmp}</div>
+  </div>${cards}`;
+}
+
+function downloadCSV(){
+  if(!entries.length)return notify("No data yet","err");
+  const hdr=["Date","Employee","Task Type","Count","Hours","Jira #","Description","Logged At"];
+  const rows=entries.map(e=>{
+    const t=TASKS.find(x=>x.id===e.task_type)||{label:e.task_type};
+    return[e.date,e.employee,t.label,e.count||"",e.hours?parseFloat(e.hours).toFixed(2):"",e.jira_number||"",
+      '"'+(e.description||"").replace(/"/g,'""')+'"',new Date(e.logged_at).toLocaleString()];
+  });
+  const emps=[...new Set(entries.map(e=>e.employee))];
+  const dates=[...new Set(entries.map(e=>e.date))].sort();
+  const sh2h=["Date","Employee","MCS Count","MCS %","Audit Count","Audit %","Payer Hrs","Jira Hrs","Research Hrs","Others Hrs","Downtime Hrs","Total Util %"];
+  const sh2=[];
+  dates.forEach(d=>emps.forEach(emp=>{
+    const de=entries.filter(e=>e.employee===emp&&e.date===d);if(!de.length)return;
+    const mcs=de.filter(e=>e.task_type==="mcs").reduce((s,e)=>s+(e.count||0),0);
+    const aud=de.filter(e=>e.task_type==="audit").reduce((s,e)=>s+(e.count||0),0);
+    const pay=de.filter(e=>e.task_type==="payer").reduce((s,e)=>s+(parseFloat(e.hours)||0),0);
+    const jir=de.filter(e=>e.task_type==="jira").reduce((s,e)=>s+(parseFloat(e.hours)||0),0);
+    const res=de.filter(e=>e.task_type==="research").reduce((s,e)=>s+(parseFloat(e.hours)||0),0);
+    const oth=de.filter(e=>e.task_type==="others").reduce((s,e)=>s+(parseFloat(e.hours)||0),0);
+    const dwn=de.filter(e=>e.task_type==="downtime").reduce((s,e)=>s+(parseFloat(e.hours)||0),0);
+    sh2.push([d,emp,mcs,((mcs/30)*100).toFixed(1)+"%",aud,((aud/30)*100).toFixed(1)+"%",
+      pay.toFixed(2),jir.toFixed(2),res.toFixed(2),oth.toFixed(2),dwn.toFixed(2),(((mcs/30)+(aud/30)+(pay/8)+(jir/8)+(res/8)+(oth/8)+(dwn/8))*100).toFixed(1)+"%"]);
+  }));
+  const NL="\r\n";
+  const csv=["=== DETAILED LOG ===",[hdr,...rows].map(r=>r.join(",")).join(NL),"","=== DAILY SUMMARY ===",[sh2h,...sh2].map(r=>r.join(",")).join(NL)].join(NL);
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=url;a.download="Utilization_"+todayStr()+".csv";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);notify("Downloaded ✓");
+}
+
+function renderAll(){renderSidebar();renderMain();}
+
+// ── BOOT ───────────────────────────────────────────
+const HARDCODED_URL = "https://hjmbsakopcnbnqppvzdo.supabase.co";
+const HARDCODED_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqbWJzYWtvcGNuYm5xcHB2emRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4Mjg5MTMsImV4cCI6MjA4OTQwNDkxM30.ZKYB5gMu9zqo4tXz4iPdjmJADhoqVvBt2uG8JAcOCmI";
+
+(async()=>{
+  // Auto-connect with hardcoded credentials — no setup screen needed
+  document.getElementById("sb-url").value=HARDCODED_URL;
+  document.getElementById("sb-key").value=HARDCODED_KEY;
+  SB_URL=HARDCODED_URL;
+  SB_KEY=HARDCODED_KEY;
+  await connectDB();
+})();
+</script>
+</body>
+</html>
